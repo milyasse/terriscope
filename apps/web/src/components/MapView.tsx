@@ -48,12 +48,14 @@ export function MapView({ fills, fillOpacity = 1, selected = null, onSelect, bub
       });
     } catch { setFailed(true); return; }
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    m.on('load', () => { setReady(true); onReady?.(m); });
+    m.on('load', () => { m.resize(); setReady(true); onReady?.(m); });
     m.on('click', 'region-fill', (e) => { const id = e.features?.[0]?.properties?.id; if (typeof id === 'string') select.current?.(id); });
     m.on('mouseenter', 'region-fill', () => { m.getCanvas().style.cursor = 'pointer'; });
     m.on('mouseleave', 'region-fill', () => { m.getCanvas().style.cursor = ''; });
+    const observer = new ResizeObserver(() => m.resize());
+    observer.observe(box.current);
     map.current = m;
-    return () => { m.remove(); map.current = null; setReady(false); };
+    return () => { observer.disconnect(); m.remove(); map.current = null; setReady(false); };
     // La carte n'est créée qu'une fois ; les changements passent par les effets suivants.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

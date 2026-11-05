@@ -27,7 +27,7 @@ export default function Territories() {
   const [status, setStatus] = useState('all');
   const [checked, setChecked] = useState<string[]>([]);
   const [bubblesOn, setBubblesOn] = useState(true);
-  const [namesOn, setNamesOn] = useState(true);
+  const [namesOn, setNamesOn] = useState(() => window.innerWidth >= 1024);
   const [layersOpen, setLayersOpen] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -95,7 +95,7 @@ export default function Territories() {
             <button type="button" aria-expanded={legendOpen} onClick={() => setLegendOpen(!legendOpen)} className={`${controlBtn} inline-flex items-center gap-1`}>{t('legend')}{legendOpen ? <ChevronDown size={15} aria-hidden="true" /> : <ChevronUp size={15} aria-hidden="true" />}</button>
           </div>
         </div>
-        {cur && <section aria-label={regionName(cur)} className="z-10 flex flex-col gap-2.5 border-y border-line bg-white p-4 lg:absolute lg:end-[16%] lg:top-[290px] lg:w-[272px] lg:rounded-xl lg:border lg:shadow-lg">
+        {cur && <section aria-label={regionName(cur)} className="z-10 flex flex-col gap-2.5 border-y border-line bg-white p-4 lg:absolute lg:end-3 lg:top-[68px] lg:w-[272px] lg:rounded-xl lg:border lg:shadow-lg">
           <div className="flex items-start gap-2"><span aria-hidden="true" className="mt-1.5 h-[11px] w-[11px] flex-none rounded-full" style={{ background: cur.strong }} /><h2 className="m-0 flex-1 text-[15px] font-extrabold leading-5">{regionName(cur)}</h2><button type="button" aria-label={t('close')} onClick={() => setSel(null)} className="grid h-8 w-8 flex-none place-items-center rounded-md border-0 bg-transparent text-night"><X size={17} aria-hidden="true" /></button></div>
           <dl className="m-0 grid grid-cols-2 gap-2 border-b border-[#e6ebef] pb-2.5">{([['population', `${num(cur.population / 1e6, 1)} M`], ['households', num(curHouseholds)], ['communes', num(curCommunes)], ['shops', num(cur.shops)], ['coverage', pct(curCov?.rate ?? 0)], ['uncovered', `${num((cur.population - (curCov?.coveredPopulation ?? 0)) / 1e6, 2)} M`]] as [TKey, string][]).map(([k, v]) => <div key={k}><dt className="text-xs font-semibold text-muted">{t(k)}</dt><dd className="m-0 text-[15px] font-extrabold">{v}</dd></div>)}</dl>
           <div className="flex flex-col gap-1 text-[13px] font-semibold"><span className="flex justify-between gap-2"><span>{t('potentialScore')}</span><strong className="font-extrabold">{num(regionPotential.get(cur.id) ?? 0)} / 100</strong></span><span className="flex justify-between gap-2"><span>{t('status')}</span><strong className="font-extrabold">{t(statusKey)}</strong></span><span className="flex justify-between gap-2"><span>{t('owner')}</span><strong className="font-extrabold">{cur.team === 'Non affecté' ? t('unassigned') : cur.team}</strong></span></div>

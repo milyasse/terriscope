@@ -28,7 +28,11 @@ export function computeCoverage(cells: PopulationCell[], services: ServicePoint[
   let population = 0, covered = 0, households = 0, coveredHouseholds = 0, weightedKm = 0;
   for (const cell of cells) {
     let nearest = Infinity;
-    for (const s of services) nearest = Math.min(nearest, distanceKm(cell.position, s.position));
+    for (const s of services) {
+      // Un degré de latitude dépasse 110 km : ce filtre évite un calcul de distance inutile.
+      if (Math.abs(s.position[1] - cell.position[1]) * 110 >= nearest) continue;
+      nearest = Math.min(nearest, distanceKm(cell.position, s.position));
+    }
     const isCovered = nearest <= radiusKm;
     population += cell.population;
     households += cell.households;

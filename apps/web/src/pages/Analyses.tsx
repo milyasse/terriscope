@@ -35,9 +35,9 @@ function Coverage() {
       <Kpi label={t('servedT')} value={num(res.servedTerritories)} />
       <Kpi label={t('deficitT')} value={num(res.deficitTerritories)} tone="warn" />
     </section>
-    <div className="grid gap-3.5 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
       <Card className="overflow-hidden"><div className="h-[380px]"><MapView label={t('tabCoverage')} fills={fills} bubbles={bubbles} selected={region || null} onSelect={setRegion} /></div><div className="flex flex-wrap gap-x-4 gap-y-1 p-3 text-xs font-semibold">{([['legendHigh', '#075B50'], ['legendMedium', '#159B78'], ['legendLow', '#A9DCC8']] as const).map(([k, c]) => <span key={k} className="flex items-center gap-1.5"><span aria-hidden="true" className="h-3 w-3.5 rounded-sm" style={{ background: c }} />{t(k)}</span>)}<span className="text-muted">{t('mapNote')}</span></div></Card>
-      <div className="flex flex-col gap-3.5">
+      <div className="flex min-w-0 flex-col gap-3.5">
         <Card className="overflow-x-auto p-3"><h2 className="m-0 mb-2 px-2 text-base font-extrabold">{t('compareScenarios')}</h2><table className="w-full min-w-[420px] border-collapse text-[13px]"><thead><tr><th className={th}>{t('scenarioRadius')}</th><th className={th}>{t('rate')}</th><th className={th}>{t('covered')}</th><th className={th}>{t('deficitT')}</th></tr></thead><tbody>{scen.map((s) => <tr key={s.radiusKm} className={`border-t border-[#e6ebef] ${s.radiusKm === km ? 'bg-mint font-bold' : ''}`}><td className={td}>{s.radiusKm} km</td><td className={td}>{pct(s.rate, 1)}</td><td className={td}>{num(s.coveredPopulation)}</td><td className={td}>{num(s.deficitTerritories)}</td></tr>)}</tbody></table></Card>
         <Card className="max-h-72 overflow-auto p-3"><h2 className="m-0 mb-2 px-2 text-base font-extrabold">{t('byTerritory')}</h2><table className="w-full border-collapse text-[13px]"><thead><tr><th className={th}>{t('region')}</th><th className={th}>{t('rate')}</th><th className={th}>{t('classCol')}</th></tr></thead><tbody>{[...res.territories].sort((a, b) => a.rate - b.rate).map((x) => <tr key={x.territory} className="border-t border-[#e6ebef]"><td className={td}>{regionName(regionById(x.territory))}</td><td className={`${td} font-extrabold`}>{pct(x.rate)}</td><td className={td}>{t(classLabel[x.coverageClass] as TKey)}</td></tr>)}</tbody></table></Card>
       </div>
@@ -59,14 +59,14 @@ function Siting() {
   const usable = CRITERIA.filter((c) => !result.excludedCriteria.includes(c.key));
   return <div className="flex flex-col gap-3.5">
     {first && second && <p className="m-0 rounded-xl bg-night p-4 text-base font-bold leading-6 text-white">{t('leads', { a: first.name, s: num(first.score), b: second.name, t: num(second.score) })}</p>}
-    <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
       <Card className="overflow-hidden"><div className="h-[420px]"><MapView label={t('tabSiting')} fills={fills} bubbles={bubbles} view="north" /></div></Card>
       <Card className="flex flex-col gap-2 p-4">
         <h2 className="m-0 text-base font-extrabold">{t('ranking')}</h2>
         {result.candidates.map((c) => <button key={c.id} type="button" aria-pressed={c.id === selected} onClick={() => setSelected(c.id)} className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 py-1.5 text-start ${c.id === selected ? 'border-2 border-forest bg-mint' : 'border-[#e6ebef] bg-white'}`}><span className="text-2xl font-extrabold text-forest">{num(c.score)}</span><span className="text-sm font-extrabold">{c.rank}. {c.name}<span className="block text-xs font-semibold text-muted">{regionName(regionById(dataset.candidates.find((x) => x.id === c.id)?.region ?? 'CAS'))}</span></span></button>)}
       </Card>
     </div>
-    <div className="grid gap-3.5 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
       <Card className="flex flex-col gap-2 p-4">
         <div className="flex items-center justify-between gap-2"><h2 className="m-0 text-base font-extrabold">{t('weights')} · {cur?.name}</h2><button type="button" onClick={() => setWeights(DEFAULT_WEIGHTS)} className="min-h-9 rounded-md border border-line bg-white px-2.5 text-xs font-bold text-night">{t('reset')}</button></div>
         {usable.map((c) => <label key={c.key} className="grid grid-cols-[minmax(0,1fr)_110px_72px] items-center gap-2 text-[13px] font-semibold"><span>{t(critKey(c.key))}</span><input type="range" min={0} max={40} step={5} value={weights[c.key]} aria-label={t('weightOf', { c: t(critKey(c.key)) })} onChange={(e) => setWeights({ ...weights, [c.key]: Number(e.target.value) })} className="w-full accent-forest" /><span className="text-end text-xs"><strong className="font-extrabold">{num(cur?.notes[c.key] ?? 0)}</strong> · {num((result.appliedWeights[c.key] ?? 0) * 100)} %</span></label>)}
@@ -98,7 +98,7 @@ function Catchment() {
     </div>
     <Note>{t('routerOff')}</Note>
     <section className="grid grid-cols-2 gap-3 md:grid-cols-3"><Kpi label={t('population')} value={num(cur?.population ?? 0)} /><Kpi label={t('households')} value={num(cur?.households ?? 0)} /><Kpi label={t('competitors')} value={num(cur?.competitors ?? 0)} tone="warn" /></section>
-    <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <Card className="overflow-hidden"><div className="h-[420px]"><MapView label={t('tabCatchment')} fills={fills} rings={rings} bubbles={bubbles} center={{ center: position, zoom }} /></div></Card>
       <Card className="overflow-x-auto p-3"><h2 className="m-0 mb-2 px-2 text-base font-extrabold">{t('catchmentTable')}</h2><table className="w-full border-collapse text-[13px]"><thead><tr><th className={th}>{t('radiusKm')}</th><th className={th}>{t('population')}</th><th className={th}>{t('households')}</th><th className={th}>{t('competitors')}</th></tr></thead><tbody>{rows.map((r) => <tr key={r.radiusKm} className={`border-t border-[#e6ebef] ${r.radiusKm === km ? 'bg-mint font-bold' : ''}`}><td className={td}>{r.radiusKm} km</td><td className={td}>{num(r.population)}</td><td className={td}>{num(r.households)}</td><td className={td}>{num(r.competitors)}</td></tr>)}</tbody></table><p className="m-0 mt-2 px-2 text-xs font-semibold leading-[18px] text-muted">{t('radiiNote')}</p></Card>
     </div>

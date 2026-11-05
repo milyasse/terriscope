@@ -71,11 +71,11 @@ export function generateDemoDataset(seed = 20261104): DemoDataset {
   for (const region of REGIONS) {
     const weights: { city: DemoCity; position: LngLat; weight: number }[] = [];
     for (const c of region.cities) {
-      const n = Math.max(12, Math.round(70 * c.share * Math.sqrt(region.population / 2_000_000)));
+      const n = Math.max(30, Math.round(260 * c.share * Math.sqrt(region.population / 2_000_000)));
       for (let i = 0; i < n; i++) weights.push({ city: c, position: sampleNear(region, c.position, 0.09 + 0.1 * r(), r), weight: 0.6 + r() });
     }
     const box = bbox(region.ring);
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 120; i++) {
       const p: LngLat = [box.minX + r() * (box.maxX - box.minX), box.minY + r() * (box.maxY - box.minY)];
       if (!pointInRing(p, region.ring)) continue;
       const c = [...region.cities].sort((a, b) => Math.hypot(a.position[0] - p[0], a.position[1] - p[1]) - Math.hypot(b.position[0] - p[0], b.position[1] - p[1]))[0] as DemoCity;

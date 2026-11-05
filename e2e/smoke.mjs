@@ -25,15 +25,21 @@ for (const lang of ['fr', 'ar']) for (const [vp, viewport] of Object.entries(vie
     if (overflow > 1) failures.push(`${where()} : débordement horizontal de ${overflow} px`);
     if (lang === 'ar' && (await page.evaluate(() => document.documentElement.dir)) !== 'rtl') failures.push(`${where()} : dir différent de rtl`);
     if (await page.getByText(/La carte ne peut pas|تعذر عرض الخريطة/).count()) failures.push(`${where()} : carte indisponible`);
+    const unfit = await page.evaluate(() => [...document.querySelectorAll('.maplibregl-map')].some((m) => { const c = m.querySelector('canvas'); return !c || Math.abs(c.getBoundingClientRect().width - m.getBoundingClientRect().width) > 2; }));
+    if (unfit) failures.push(`${where()} : la carte ne remplit pas son conteneur`);
     await page.screenshot({ path: `${out}/${lang}-${vp}-${r || 'accueil'}.png`, fullPage: true });
   }
-  if (lang === 'fr' && vp === 'desktop') {
+  if (lang === 'fr') {
     await page.goto(`${base}#/analyses`);
     for (const tab of ['Implantation', 'Chalandise']) {
       await page.getByRole('button', { name: tab, exact: true }).click();
       await page.waitForTimeout(1200);
-      await page.screenshot({ path: `${out}/fr-desktop-analyses-${tab.toLowerCase()}.png`, fullPage: true });
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      if (over > 1) failures.push(`${vp} ${tab} : débordement horizontal de ${over} px`);
+      await page.screenshot({ path: `${out}/fr-${vp}-analyses-${tab.toLowerCase()}.png`, fullPage: true });
     }
+  }
+  if (lang === 'fr' && vp === 'desktop') {
     await page.goto(`${base}#/rapports`);
     await page.waitForTimeout(800);
     for (const label of ['CSV', 'PNG']) {
