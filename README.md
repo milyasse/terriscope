@@ -6,6 +6,8 @@ Plateforme de géoanalytique en cours de développement, centrée d'abord sur le
 
 > **État actuel : démo sur données fictives.** Les contours des régions sont schématiques et aucun chiffre n'est une statistique officielle. Le calcul par temps de trajet n'est pas encore disponible, faute de moteur de routage connecté.
 
+**Démo :** https://milyasse.github.io/terriscope/
+
 ## Démarrer
 
 Prérequis : Node.js 22 ou plus récent.
