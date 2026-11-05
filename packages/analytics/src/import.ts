@@ -125,11 +125,11 @@ export function detectColumns(table: ParsedTable): ColumnMapping {
 }
 
 export type DatasetKind = 'service' | 'competitor' | 'candidate' | 'population';
-export interface ImportRecord { row: number; name: string; position: LngLat; population: number | null; households: number | null; outsideMorocco: boolean }
-export type IssueCode = 'missingCoords' | 'invalidCoords' | 'outOfRange' | 'duplicate' | 'missingPopulation';
+export interface ImportRecord { row: number; name: string; position: LngLat; population: number | null; households: number | null }
+export type IssueCode = 'missingCoords' | 'invalidCoords' | 'outOfRange' | 'outsideMorocco' | 'duplicate' | 'missingPopulation';
 export interface ImportIssue { row: number; code: IssueCode }
 export interface ImportReport {
-  records: ImportRecord[]; issues: ImportIssue[]; total: number; valid: number; counts: Record<IssueCode, number>; outsideMorocco: number;
+  records: ImportRecord[]; issues: ImportIssue[]; total: number; valid: number; counts: Record<IssueCode, number>;
   hint: 'none' | 'looksProjected' | 'looksSwapped' | 'noCoordinates';
 }
 const MOROCCO = { minLng: -18, maxLng: -0.9, minLat: 20.5, maxLat: 36.2 };
@@ -138,11 +138,11 @@ const inMorocco = (p: LngLat) => p[0] >= MOROCCO.minLng && p[0] <= MOROCCO.maxLn
 /** Contrôle chaque ligne sans rien corriger en silence : tout rejet est compté et motivé. */
 export function validateImport(table: ParsedTable, mapping: ColumnMapping, opts: { kind: DatasetKind; crs: CrsCode }): ImportReport {
   const issues: ImportIssue[] = [], records: ImportRecord[] = [];
-  const counts: Record<IssueCode, number> = { missingCoords: 0, invalidCoords: 0, outOfRange: 0, duplicate: 0, missingPopulation: 0 };
+  const counts: Record<IssueCode, number> = { missingCoords: 0, invalidCoords: 0, outOfRange: 0, outsideMorocco: 0, duplicate: 0, missingPopulation: 0 };
   const add = (row: number, code: IssueCode) => { issues.push({ row, code }); counts[code]++; };
   const seen = new Set<string>();
   const hasColumns = mapping.lat !== null && mapping.lng !== null;
-  let large = 0, swappable = 0, outside = 0;
+  let large = 0, swappable = 0;
   table.rows.forEach((r, i) => {
     const row = i + 2;
     let position: LngLat | null = null;
@@ -160,18 +160,18 @@ export function validateImport(table: ParsedTable, mapping: ColumnMapping, opts:
       if (Math.abs(position[0]) > 180 || Math.abs(position[1]) > 90) return add(row, 'outOfRange');
     }
     if (!Number.isFinite(position[0]) || !Number.isFinite(position[1]) || Math.abs(position[0]) > 180 || Math.abs(position[1]) > 90) return add(row, 'outOfRange');
+    // Hors du marché couvert, un point fausserait les normalisations : il est écarté et signalé.
+    if (!inMorocco(position)) return add(row, 'outsideMorocco');
     const name = mapping.name !== null && r[mapping.name] !== null ? String(r[mapping.name]) : `Ligne ${row}`;
     const population = mapping.population !== null ? parseLooseNumber(r[mapping.population]) : null;
     if (opts.kind === 'population' && (population === null || population < 0)) return add(row, 'missingPopulation');
     const key = `${name.toLowerCase()}|${position[0].toFixed(5)}|${position[1].toFixed(5)}`;
     if (seen.has(key)) return add(row, 'duplicate');
     seen.add(key);
-    const outsideMorocco = !inMorocco(position);
-    if (outsideMorocco) outside++;
     const households = mapping.households !== null ? parseLooseNumber(r[mapping.households]) : null;
-    records.push({ row, name, position, population, households, outsideMorocco });
+    records.push({ row, name, position, population, households });
   });
   const total = table.rows.length;
   const hint: ImportReport['hint'] = !hasColumns && !table.geometry ? 'noCoordinates' : large > total / 2 ? 'looksProjected' : swappable > total / 2 ? 'looksSwapped' : 'none';
-  return { records, issues, total, valid: records.length, counts, outsideMorocco: outside, hint };
+  return { records, issues, total, valid: records.length, counts, hint };
 }

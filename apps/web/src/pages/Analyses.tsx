@@ -63,7 +63,7 @@ function Siting() {
   return <div className="flex flex-col gap-3.5">
     {first && second && <p className="m-0 rounded-xl bg-night p-4 text-base font-bold leading-6 text-white">{t('leads', { a: first.name, s: num(first.score), b: second.name, t: num(second.score) })}</p>}
     <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-      <Card className="overflow-hidden"><div className="h-[420px]"><MapView label={t('tabSiting')} fills={fills} bubbles={bubbles} view="north" /></div></Card>
+      <Card className="self-start overflow-hidden"><div className="h-[420px]"><MapView label={t('tabSiting')} fills={fills} bubbles={bubbles} view="north" /></div></Card>
       <Card className="flex flex-col gap-2 p-4">
         <h2 className="m-0 text-base font-extrabold">{t('ranking')}</h2>
         {result.candidates.map((c) => <button key={c.id} type="button" aria-pressed={c.id === selected} onClick={() => setSelected(c.id)} className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 py-1.5 text-start ${c.id === selected ? 'border-2 border-forest bg-mint' : 'border-[#e6ebef] bg-white'}`}><span className="text-2xl font-extrabold text-forest">{num(c.score)}</span><span className="text-sm font-extrabold">{c.rank}. {c.name}<span className="block text-xs font-semibold text-muted">{regionName(regionById(dataset.candidates.find((x) => x.id === c.id)?.region ?? 'CAS'))}</span></span></button>)}

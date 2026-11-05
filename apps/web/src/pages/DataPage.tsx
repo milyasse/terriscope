@@ -7,7 +7,7 @@ import { useI18n, type TKey } from '../lib/i18n';
 import { addDataset, removeDataset, useDatasets } from '../lib/imports';
 import { readTable } from '../lib/readFile';
 
-const ISSUES: IssueCode[] = ['missingCoords', 'invalidCoords', 'outOfRange', 'duplicate', 'missingPopulation'];
+const ISSUES: IssueCode[] = ['missingCoords', 'invalidCoords', 'outOfRange', 'outsideMorocco', 'duplicate', 'missingPopulation'];
 const KINDS: DatasetKind[] = ['service', 'competitor', 'candidate', 'population'];
 
 function Importer() {
@@ -64,7 +64,6 @@ function Importer() {
           <div className="rounded-lg bg-mist p-3"><div className="text-xs font-semibold text-muted">{t('impTotal')}</div><div data-testid="count-total" className="text-xl font-extrabold">{num(report.total)}</div></div>
           <div className="rounded-lg bg-mint p-3"><div className="text-xs font-semibold text-muted">{t('impValid')}</div><div data-testid="count-valid" className="text-xl font-extrabold">{num(report.valid)}</div></div>
           {ISSUES.filter((c) => report.counts[c] > 0).map((c) => <div key={c} className="rounded-lg bg-[#fdefd6] p-3"><div className="text-xs font-semibold">{t(`issue${c}` as TKey)}</div><div data-testid={`count-${c}`} className="text-xl font-extrabold">{num(report.counts[c])}</div><div className="text-xs font-semibold">{t('impFirstRows', { r: report.issues.filter((i) => i.code === c).slice(0, 5).map((i) => i.row).join(', ') })}</div></div>)}
-          {report.outsideMorocco > 0 && <div className="rounded-lg bg-[#fdefd6] p-3"><div className="text-xs font-semibold">{t('impOutside')}</div><div data-testid="count-outside" className="text-xl font-extrabold">{num(report.outsideMorocco)}</div></div>}
         </div>
         {report.hint !== 'none' && <p role="alert" className="m-0 rounded-lg border border-rust p-3 font-bold">{t(`hint${report.hint}` as TKey)}</p>}
         {(table.convertedGeometries ?? 0) > 0 && <Note>{t('impConverted', { n: num(table.convertedGeometries ?? 0) })}</Note>}

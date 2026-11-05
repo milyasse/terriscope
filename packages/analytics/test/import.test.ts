@@ -22,9 +22,8 @@ test('détection des colonnes, avec accents et variantes', () => {
 test('validation : chaque rejet est compté', () => {
   const t = parseCsv(FIXTURE);
   const r = validateImport(t, detectColumns(t), { kind: 'candidate', crs: 'EPSG:4326' });
-  assert.equal(r.total, 7); assert.equal(r.valid, 3);
-  assert.deepEqual(r.counts, { missingCoords: 1, invalidCoords: 1, outOfRange: 1, duplicate: 1, missingPopulation: 0 });
-  assert.equal(r.outsideMorocco, 1);
+  assert.equal(r.total, 7); assert.equal(r.valid, 2);
+  assert.deepEqual(r.counts, { missingCoords: 1, invalidCoords: 1, outOfRange: 1, outsideMorocco: 1, duplicate: 1, missingPopulation: 0 });
   assert.equal(r.valid + r.issues.length, r.total);
   assert.deepEqual(r.records[0]?.position, [-7.59, 33.57]);
   assert.equal(r.issues.find((i) => i.code === 'duplicate')?.row, 4);
@@ -78,6 +77,6 @@ test('Web Mercator : point de référence', () => {
 test('CSV projeté importé via Merchich arrive au Maroc', () => {
   const t = parseCsv('x;y\n295600;322500\n');
   const r = validateImport(t, detectColumns(t), { kind: 'service', crs: 'EPSG:26191' });
-  assert.equal(r.valid, 1); assert.equal(r.outsideMorocco, 0);
+  assert.equal(r.valid, 1); assert.equal(r.counts.outsideMorocco, 0);
   assert.ok(Math.abs((r.records[0]?.position[0] ?? 0) + 7.6) < 0.02);
 });

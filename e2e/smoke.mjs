@@ -74,17 +74,18 @@ for (const lang of ['fr', 'ar']) for (const [vp, viewport] of Object.entries(vie
     // CSV avec erreurs : chaque rejet est compté.
     await file.setInputFiles(tmp('sites.csv', 'nom;latitude;longitude\nSite Test A;33,57;-7,59\nSite Test B;34,02;-6,84\nSite Test A;33,57;-7,59\nSite C;;-6\nSite D;abc;-5\nSite E;99;-5\nSite F;48,85;2,35\n'));
     await page.getByTestId('count-total').waitFor();
-    for (const [k, v] of [['total', '7'], ['valid', '3'], ['duplicate', '1'], ['missingCoords', '1'], ['invalidCoords', '1'], ['outOfRange', '1'], ['outside', '1']]) expect(k, await count(k), v);
+    for (const [k, v] of [['total', '7'], ['valid', '2'], ['duplicate', '1'], ['missingCoords', '1'], ['invalidCoords', '1'], ['outOfRange', '1'], ['outsideMorocco', '1']]) expect(k, await count(k), v);
     await page.screenshot({ path: `${out}/fr-desktop-import-rapport.png`, fullPage: true });
     await page.getByLabel('Type de données').selectOption('candidate');
-    await page.getByRole('button', { name: 'Intégrer 3 lignes' }).click();
+    await page.getByRole('button', { name: 'Intégrer 2 lignes' }).click();
     await page.getByText('Données intégrées').waitFor();
     // CSV en Merchich : conseil de projection, puis conversion.
     await file.setInputFiles(tmp('services-merchich.csv', 'nom;x;y\nS1;295600;322500\nS2;296000;323000\n'));
     await page.getByText('ressemblent à des coordonnées projetées').waitFor();
     await page.getByLabel('Système de coordonnées').selectOption('EPSG:26191');
+    await page.getByLabel('Type de données').selectOption('service');
     expect('merchich', await count('valid'), '2');
-    if (await page.getByTestId('count-outside').count()) failures.push('merchich : points hors du Maroc');
+    if (await page.getByTestId('count-outsideMorocco').count()) failures.push('merchich : points hors du Maroc');
     await page.getByRole('button', { name: 'Intégrer 2 lignes' }).click();
     await page.getByText('Données intégrées').waitFor();
     // GeoJSON avec polygone.
