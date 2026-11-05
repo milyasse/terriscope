@@ -42,7 +42,8 @@ for (const lang of ['fr', 'ar']) for (const [vp, viewport] of Object.entries(vie
     }
     await page.goto(`${base}#/territoires`);
     await page.waitForTimeout(800);
-    await page.getByRole('button', { name: 'Oriental', exact: true }).first().click();
+    await page.locator('.map-label').first().waitFor({ timeout: 15000 });
+    await page.getByRole('complementary').getByRole('button', { name: /^Oriental/ }).click();
     await page.getByRole('heading', { name: 'Oriental' }).waitFor();
     await page.getByLabel('Rechercher un point').fill('Tamansourt');
     await page.getByText('Filtre actif').waitFor();
