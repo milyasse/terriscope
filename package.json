@@ -3,15 +3,23 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
-  "engines": { "node": ">=22" },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "npm run dev -w @terriscope/web",
     "build": "npm run build -w @terriscope/web",
     "preview": "npm run preview -w @terriscope/web",
     "test": "npm run test -w @terriscope/analytics",
-    "typecheck": "npm run typecheck -w @terriscope/analytics && npm run typecheck -w @terriscope/web",
-    "e2e": "node e2e/smoke.mjs"
+    "typecheck": "npm run typecheck -w @terriscope/analytics && npm run typecheck -w @terriscope/web && npm run typecheck -w @terriscope/api",
+    "e2e": "node e2e/smoke.mjs",
+    "test:api": "npm run test -w @terriscope/api",
+    "migrate": "npm run migrate -w @terriscope/api",
+    "api": "npm run start -w @terriscope/api"
   },
   "devDependencies": {
     "playwright": "^1.55.0"

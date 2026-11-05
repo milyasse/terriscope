@@ -23,10 +23,12 @@ npm run build
 | Dossier | Rôle |
 | --- | --- |
 | `apps/web` | Application React : écrans, carte, français et arabe |
-| `packages/analytics` | Moteur d'analyse et jeu de données DEMO, sans dépendance |
+| `apps/api` | API Node.js : comptes, offres, jeux de données, analyses PostGIS |
+| `db/migrations` | Schéma PostgreSQL et PostGIS |
+| `packages/analytics` | Moteur d'analyse et jeu de données DEMO |
 | `e2e` | Parcours de contrôle dans un vrai navigateur |
 
-L'API et la base PostGIS sont prévues pour une phase ultérieure.
+L'application web fonctionne pour l'instant en mode DEMO, sans appeler l'API. Voir [`docs/API.md`](docs/API.md) et [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md).
 
 ## Hébergement
 

@@ -8,6 +8,16 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: terriscope_test
+          POSTGRES_USER: terriscope
+          POSTGRES_PASSWORD: mot-de-passe-de-test-uniquement
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U terriscope" --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,7 +27,15 @@ jobs:
         run: npm install
       - run: npm run typecheck
       - run: npm test
+      - name: Tests de l'API sur PostGIS
+        run: npm run test:api
+        env:
+          DATABASE_URL: postgres://terriscope:mot-de-passe-de-test-uniquement@localhost:5432/terriscope_test
       - run: npm run build
+      - name: Vérifier la configuration Docker et construire l'image de l'API
+        run: |
+          POSTGRES_PASSWORD=x docker compose config --quiet
+          docker build -f Dockerfile.api -t terriscope-api .
       - name: Installer Chromium
         run: npx playwright install --with-deps chromium
       - name: Parcours de bout en bout

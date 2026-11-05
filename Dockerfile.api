@@ -1,0 +1,14 @@
+FROM node:22-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/analytics/package.json packages/analytics/package.json
+RUN npm ci --omit=dev --workspace @terriscope/api --workspace @terriscope/analytics --include-workspace-root=false
+COPY apps/api apps/api
+COPY packages/analytics packages/analytics
+COPY db db
+USER node
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["node", "--import", "tsx", "apps/api/src/server.ts"]

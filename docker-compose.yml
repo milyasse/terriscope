@@ -1,0 +1,38 @@
+# Plateforme locale ou sur serveur : API, PostGIS et, en option, routage Valhalla.
+#   docker compose up --build
+#   docker compose --profile routing up --build
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: terriscope
+      POSTGRES_USER: terriscope
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
+    volumes: [dbdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U terriscope -d terriscope]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  api:
+    build: { context: ., dockerfile: Dockerfile.api }
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgres://terriscope:${POSTGRES_PASSWORD}@db:5432/terriscope
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
+      VALHALLA_URL: ${VALHALLA_URL:-}
+    ports: ['3000:3000']
+  valhalla:
+    profiles: [routing]
+    image: ghcr.io/valhalla/valhalla-scripted:latest
+    environment:
+      tile_urls: https://download.geofabrik.de/africa/morocco-latest.osm.pbf
+      use_tiles_ignore_pbf: 'True'
+      serve_tiles: 'True'
+    volumes: [valhalla:/custom_files]
+    ports: ['8002:8002']
+volumes:
+  dbdata:
+  valhalla:

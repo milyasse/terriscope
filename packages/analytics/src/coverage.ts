@@ -21,22 +21,18 @@ export function classify(rate: number): CoverageClass {
   return 'none';
 }
 
-/** Distance moyenne d'accès pondérée par la population, vers le service le plus proche. */
-export function computeCoverage(cells: PopulationCell[], services: ServicePoint[], radiusKm: number): CoverageResult {
+export interface CellDistance { cell: Pick<PopulationCell, 'population' | 'households' | 'territory'>; nearestKm: number | null }
+
+/** Agrège des distances déjà calculées, par ce moteur ou par PostGIS, avec les mêmes règles. */
+export function aggregateCoverage(rows: Iterable<CellDistance>, radiusKm: number): CoverageResult {
   if (radiusKm <= 0) throw new RangeError('Le rayon doit être strictement positif.');
   const byTerritory = new Map<string, { population: number; covered: number }>();
-  let population = 0, covered = 0, households = 0, coveredHouseholds = 0, weightedKm = 0;
-  for (const cell of cells) {
-    let nearest = Infinity;
-    for (const s of services) {
-      // Un degré de latitude dépasse 110 km : ce filtre évite un calcul de distance inutile.
-      if (Math.abs(s.position[1] - cell.position[1]) * 110 >= nearest) continue;
-      nearest = Math.min(nearest, distanceKm(cell.position, s.position));
-    }
-    const isCovered = nearest <= radiusKm;
+  let population = 0, covered = 0, households = 0, coveredHouseholds = 0, weightedKm = 0, measured = false;
+  for (const { cell, nearestKm } of rows) {
+    const isCovered = nearestKm !== null && nearestKm <= radiusKm;
     population += cell.population;
     households += cell.households;
-    if (Number.isFinite(nearest)) weightedKm += nearest * cell.population;
+    if (nearestKm !== null) { weightedKm += nearestKm * cell.population; measured = true; }
     if (isCovered) { covered += cell.population; coveredHouseholds += cell.households; }
     const t = byTerritory.get(cell.territory) ?? { population: 0, covered: 0 };
     t.population += cell.population;
@@ -50,9 +46,23 @@ export function computeCoverage(cells: PopulationCell[], services: ServicePoint[
   return {
     radiusKm, population, coveredPopulation: covered, uncoveredPopulation: population - covered,
     households, coveredHouseholds, rate: population ? covered / population : 0,
-    meanAccessKm: population && services.length ? weightedKm / population : null,
+    meanAccessKm: population && measured ? weightedKm / population : null,
     servedTerritories: territories.filter((t) => t.coveredPopulation > 0).length,
     deficitTerritories: territories.filter((t) => t.rate < 0.55).length,
     territories,
   };
+}
+
+/** Distance moyenne d'accès pondérée par la population, vers le service le plus proche. */
+export function computeCoverage(cells: PopulationCell[], services: ServicePoint[], radiusKm: number): CoverageResult {
+  if (radiusKm <= 0) throw new RangeError('Le rayon doit être strictement positif.');
+  return aggregateCoverage(cells.map((cell) => {
+    let nearest = Infinity;
+    for (const s of services) {
+      // Un degré de latitude dépasse 110 km : ce filtre évite un calcul de distance inutile.
+      if (Math.abs(s.position[1] - cell.position[1]) * 110 >= nearest) continue;
+      nearest = Math.min(nearest, distanceKm(cell.position, s.position));
+    }
+    return { cell, nearestKm: Number.isFinite(nearest) ? nearest : null };
+  }), radiusKm);
 }
