@@ -161,7 +161,7 @@ test('PostGIS et le moteur TypeScript donnent le même résultat de couverture',
   const tsCat = computeCatchment(site, cells, [], [5, 10]);
   cat.body.result.rows.forEach((r: { population: number }, i: number) => { const t = tsCat[i]?.population ?? 0; assert.ok(Math.abs(r.population - t) <= Math.max(0.02 * t, 2000), `${r.population} / ${t}`); });
 });
-test('couverture : aucun service, résultat nul et sans distance', async () => {
+test('couverture : valeurs exactes sur un cas construit', async () => {
   const a = await signup();
   const pop = (await call(app, 'POST', '/datasets', a.token, ds('population'))).body.id;
   const near = (await call(app, 'POST', '/datasets', a.token, ds('service', [{ name: 's', lng: -7.6, lat: 33.5 }]))).body.id;
