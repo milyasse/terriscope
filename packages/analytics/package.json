@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json"
@@ -12,5 +14,8 @@
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.9.0"
+  },
+  "dependencies": {
+    "proj4": "^2.15.0"
   }
 }

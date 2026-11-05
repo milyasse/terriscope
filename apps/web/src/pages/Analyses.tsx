@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { circle, computeCatchment, computeCoverage, buildCandidateMetrics, CRITERIA, DEFAULT_WEIGHTS, scoreCandidates, STANDARD_RADII_KM, type CriterionKey, type Weights } from '@terriscope/analytics';
 import { coverageColor, MapView } from '../components/MapView';
 import { Card, Kpi, Note, Segmented, Select } from '../components/Ui';
-import { competitorPoints, dataset, regionById, REGIONS, servicePoints } from '../lib/demo';
+import { regionById, REGIONS } from '../lib/demo';
+import { useEffectiveData } from '../lib/imports';
 import { useI18n, type TKey } from '../lib/i18n';
 
 type Tab = 'coverage' | 'siting' | 'catchment';
@@ -12,12 +13,13 @@ const td = 'p-2';
 
 function Coverage() {
   const { t, num, pct, regionName } = useI18n();
+  const { cells: allCells, services: servicePoints } = useEffectiveData();
   const [km, setKm] = useState(5);
   const [region, setRegion] = useState('');
-  const cells = useMemo(() => (region ? dataset.cells.filter((c) => c.region === region) : dataset.cells), [region]);
-  const res = useMemo(() => computeCoverage(cells, servicePoints, km), [cells, km]);
-  const scen = useMemo(() => STANDARD_RADII_KM.map((r) => computeCoverage(cells, servicePoints, r)), [cells]);
-  const nat = useMemo(() => computeCoverage(dataset.cells, servicePoints, km), [km]);
+  const cells = useMemo(() => (region ? allCells.filter((c) => c.region === region) : allCells), [region, allCells]);
+  const res = useMemo(() => computeCoverage(cells, servicePoints, km), [cells, servicePoints, km]);
+  const scen = useMemo(() => STANDARD_RADII_KM.map((r) => computeCoverage(cells, servicePoints, r)), [cells, servicePoints]);
+  const nat = useMemo(() => computeCoverage(allCells, servicePoints, km), [allCells, servicePoints, km]);
   const fills = useMemo(() => Object.fromEntries(REGIONS.map((r) => [r.id, coverageColor(nat.territories.find((x) => x.territory === r.id)?.rate ?? 0)])), [nat]);
   const bubbles = useMemo(() => REGIONS.map((r) => ({ id: r.id, position: r.label, text: pct(nat.territories.find((x) => x.territory === r.id)?.rate ?? 0).replace(/\s/g, ''), color: '#fff', dark: true, size: 38, title: regionName(r), region: r.id })), [nat, pct, regionName]);
   const classLabel: Record<string, TKey> = { high: 'legendHigh', medium: 'legendMedium', low: 'legendLow', none: 'legendNone' };
@@ -48,14 +50,15 @@ function Coverage() {
 
 function Siting() {
   const { t, num, regionName } = useI18n();
+  const dataset = useEffectiveData();
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [selected, setSelected] = useState(dataset.candidates[0]?.id ?? '');
-  const metrics = useMemo(() => buildCandidateMetrics(dataset.candidates, dataset.cells, servicePoints, competitorPoints), []);
+  const metrics = useMemo(() => buildCandidateMetrics(dataset.candidates, dataset.cells, dataset.services, dataset.competitors), [dataset]);
   const result = useMemo(() => scoreCandidates(metrics, weights), [metrics, weights]);
   const first = result.candidates[0], second = result.candidates[1];
   const cur = result.candidates.find((c) => c.id === selected) ?? first;
   const fills = useMemo(() => Object.fromEntries(REGIONS.map((r) => [r.id, r.id === 'CAS' ? '#DDF3EA' : '#ECEFF2'])), []);
-  const bubbles = useMemo(() => result.candidates.map((c) => { const s = dataset.candidates.find((x) => x.id === c.id); return { id: c.id, position: s?.position ?? [0, 0] as [number, number], text: String(c.rank), color: c.id === selected ? '#075B50' : '#142D46', size: 30, title: `${c.name} : ${Math.round(c.score)}` }; }), [result, selected]);
+  const bubbles = useMemo(() => result.candidates.map((c) => { const s = dataset.candidates.find((x) => x.id === c.id); return { id: c.id, position: s?.position ?? [0, 0] as [number, number], text: String(c.rank), color: c.id === selected ? '#075B50' : '#142D46', size: 30, title: `${c.name} : ${Math.round(c.score)}` }; }), [result, selected, dataset]);
   const usable = CRITERIA.filter((c) => !result.excludedCriteria.includes(c.key));
   return <div className="flex flex-col gap-3.5">
     {first && second && <p className="m-0 rounded-xl bg-night p-4 text-base font-bold leading-6 text-white">{t('leads', { a: first.name, s: num(first.score), b: second.name, t: num(second.score) })}</p>}
@@ -80,14 +83,16 @@ function Siting() {
 
 function Catchment() {
   const { t, num } = useI18n();
+  const dataset = useEffectiveData();
+  const competitorPoints = dataset.competitors;
   const [site, setSite] = useState(dataset.candidates[0]?.id ?? '');
   const [km, setKm] = useState(5);
   const candidate = dataset.candidates.find((c) => c.id === site) ?? dataset.candidates[0];
   const position = candidate?.position ?? [-7.6, 33.5];
-  const rows = useMemo(() => computeCatchment(position, dataset.cells, competitorPoints), [position]);
+  const rows = useMemo(() => computeCatchment(position, dataset.cells, competitorPoints), [position, dataset.cells, competitorPoints]);
   const rings = useMemo(() => STANDARD_RADII_KM.filter((r) => r <= km).map((r) => circle(position, r)), [position, km]);
   const cur = rows.find((r) => r.radiusKm === km);
-  const bubbles = useMemo(() => [{ id: 'site', position, text: '1', color: '#142D46', size: 30, title: candidate?.name ?? '' }, ...competitorPoints.filter((c) => Math.abs(c.position[0] - position[0]) < 1 && Math.abs(c.position[1] - position[1]) < 1).slice(0, 80).map((c) => ({ id: c.id, position: c.position, text: '', color: '#F2A541', size: 12, title: t('typeCompetitor') }))], [position, candidate, t]);
+  const bubbles = useMemo(() => [{ id: 'site', position, text: '1', color: '#142D46', size: 30, title: candidate?.name ?? '' }, ...competitorPoints.filter((c) => Math.abs(c.position[0] - position[0]) < 1 && Math.abs(c.position[1] - position[1]) < 1).slice(0, 80).map((c) => ({ id: c.id, position: c.position, text: '', color: '#F2A541', size: 12, title: t('typeCompetitor') }))], [position, candidate, t, competitorPoints]);
   const fills = useMemo(() => Object.fromEntries(REGIONS.map((r) => [r.id, '#ECEFF2'])), []);
   const zoom = km >= 15 ? 9 : km >= 10 ? 9.6 : km >= 5 ? 10.5 : km >= 3 ? 11.2 : 12.6;
   return <div className="flex flex-col gap-3.5">
@@ -105,11 +110,19 @@ function Catchment() {
   </div>;
 }
 
+function ImportBanner() {
+  const { t } = useI18n();
+  const { datasets, populationReplaced } = useEffectiveData();
+  if (!datasets.length) return null;
+  return <Note>{t('usesImports', { d: datasets.map((d) => d.fileName).join(', ') })}{populationReplaced ? ` ${t('importReplacesPop')}` : ''}</Note>;
+}
+
 export default function Analyses() {
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('coverage');
   return <div className="mx-auto flex max-w-[1400px] flex-col gap-3.5 p-4 md:p-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="m-0 text-2xl font-extrabold">{t('analysesTitle')}</h1><Segmented label={t('analysesTitle')} value={tab} onChange={setTab} options={[{ value: 'coverage', label: t('tabCoverage') }, { value: 'siting', label: t('tabSiting') }, { value: 'catchment', label: t('tabCatchment') }]} /></div>
+    <ImportBanner />
     {tab === 'coverage' && <Coverage />}{tab === 'siting' && <Siting />}{tab === 'catchment' && <Catchment />}
   </div>;
 }
