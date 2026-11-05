@@ -1,0 +1,37 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Parcours de bout en bout
+        run: |
+          npm run preview &
+          npx --yes wait-on@8 http://localhost:4173/
+          npm run e2e
+      - name: Conserver captures et verrou de dépendances
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification
+          path: |
+            artifacts/screens
+            package-lock.json
+          if-no-files-found: warn
+          retention-days: 14

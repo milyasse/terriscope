@@ -1,0 +1,19 @@
+{
+  "name": "terriscope",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "npm run dev -w @terriscope/web",
+    "build": "npm run build -w @terriscope/web",
+    "preview": "npm run preview -w @terriscope/web",
+    "test": "npm run test -w @terriscope/analytics",
+    "typecheck": "npm run typecheck -w @terriscope/analytics && npm run typecheck -w @terriscope/web",
+    "e2e": "node e2e/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}
