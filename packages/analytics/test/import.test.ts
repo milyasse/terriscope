@@ -60,14 +60,16 @@ test('GeoJSON : points, polygones ramenés au centre, erreurs explicites', () =>
 test('projection Merchich Nord : position cohérente avec les paramètres de la projection', () => {
   const [x, y] = fromWgs84('EPSG:26191', [-7.6, 33.5]);
   assert.ok(Math.abs(x - 295_600) < 1500, String(x));
-  assert.ok(Math.abs(y - 322_500) < 1500, String(y));
+  // 300 km à l'origine, 0,2° au nord, plus environ 2,2 km de courbure du cône à 2,2° du méridien central.
+  assert.ok(Math.abs(y - 324_400) < 800, String(y));
   const back = toWgs84('EPSG:26191', [x, y]);
   assert.ok(Math.abs(back[0] + 7.6) < 1e-7 && Math.abs(back[1] - 33.5) < 1e-7);
 });
 test('projection Merchich Sud : position cohérente avec les paramètres de la projection', () => {
   const [x, y] = fromWgs84('EPSG:26192', [-9.6, 30.42]);
   assert.ok(Math.abs(x - 96_000) < 3000, String(x));
-  assert.ok(Math.abs(y - 379_800) < 3000, String(y));
+  // 300 km à l'origine, 0,72° au nord, plus environ 7,4 km de courbure du cône à 4,2° du méridien central.
+  assert.ok(Math.abs(y - 387_200) < 800, String(y));
 });
 test('Web Mercator : point de référence', () => {
   const [lng, lat] = toWgs84('EPSG:3857', [-845_000, 3_962_000]);
